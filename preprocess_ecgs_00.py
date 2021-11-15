@@ -59,16 +59,14 @@ def notch(data, fs):
 def baseline_wander_removal(data, sampling_frequency):
     row,__ = data.shape
     processed_data = np.zeros(data.shape)
-    for lead in range(0,row):
-        # Baseline estimation
-        win_size = int(np.round(0.2 * sampling_frequency)) + 1
-        baseline = scipy.signal.medfilt(data[lead,:], win_size)
-        win_size = int(np.round(0.6 * sampling_frequency)) + 1
-        baseline = scipy.signal.medfilt(baseline, win_size)
-        # Removing baseline
-        filt_data = data[lead,:] - baseline
-        processed_data[lead,:] = filt_data
-    return processed_data
+
+    win_size = int(np.round(0.2 * sampling_frequency)) + 1
+    baseline = scipy.ndimage.median_filter(data, [1, win_size], mode='constant')
+    win_size = int(np.round(0.6 * sampling_frequency)) + 1
+    baseline = scipy.ndimage.median_filter(baseline, [1, win_size], mode='constant')
+    filt_data = data - baseline
+    
+    return filt_data
 
 
 def downsample_signal(df, Hz, NewHz):
@@ -92,7 +90,9 @@ def loadecg(filename: str) -> np.ndarray:
 
     if not os.path.exists(filename):
         raise FileNotFoundError(filename)
-    ecg_signal = np.load(filename).T
+    ecg_signal = np.load(filename)
+    if ecg_signal.shape[1] == 12:
+        ecg_signal = ecg_signal.T
     channels, sequence_length = ecg_signal.shape
     assert (channels == 12), "Channels are not set to 12"
     if sequence_length > 5000:
