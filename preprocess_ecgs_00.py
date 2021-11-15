@@ -21,6 +21,7 @@ import glob
 import scipy
 import scipy.signal
 import argparse
+import tqdm
 
 
 def get_command_line():
@@ -110,12 +111,12 @@ def main():
     files = glob.glob(args['input'] + '/*.npy')
     os.makedirs(args['output'], exist_ok=True)
     print(len(files))
-    for i,f in enumerate(files):
+    for i,f in enumerate(tqdm.tqdm(files)):
         ecg = loadecg(f)
         ecg_notch_removed = notch(ecg, 500)
         ecg_baseline_removed = baseline_wander_removal(ecg_notch_removed, 500)
         np.save(args['output'] + "/" + f.split("/")[-1], ecg_baseline_removed.astype(np.float16))
-        print(i, "processed")
+        # print(i, "processed")
     print("COMPLETE")
 
 
